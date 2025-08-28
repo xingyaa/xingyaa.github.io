@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全运营工作图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .map-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .central-hub {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+            z-index: 10;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .central-hub:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.7);
+        }
+
+        .domain {
+            position: absolute;
+            width: 180px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .domain:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .domain h3 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .domain-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .sub-items {
+            list-style: none;
+            font-size: 0.85em;
+            color: #555;
+        }
+
+        .sub-items li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sub-items li:last-child {
+            border-bottom: none;
+        }
+
+        /* 位置布局 - 围绕中心的圆形分布 */
+        .domain-1 { top: 10%; left: 50%; transform: translateX(-50%); }
+        .domain-2 { top: 20%; right: 15%; }
+        .domain-3 { top: 50%; right: 5%; transform: translateY(-50%); }
+        .domain-4 { bottom: 20%; right: 15%; }
+        .domain-5 { bottom: 10%; left: 50%; transform: translateX(-50%); }
+        .domain-6 { bottom: 20%; left: 15%; }
+        .domain-7 { top: 50%; left: 5%; transform: translateY(-50%); }
+        .domain-8 { top: 20%; left: 15%; }
+
+        .connection-line {
+            position: absolute;
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            height: 2px;
+            transform-origin: left center;
+            z-index: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .modal-section {
+            margin-bottom: 25px;
+        }
+
+        .modal-section h4 {
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+
+        .modal-section ul {
+            list-style-position: inside;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .legend h4 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .legend-icon {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 1200px) {
+            .domain {
+                width: 150px;
+                padding: 15px;
+            }
+            .domain h3 {
+                font-size: 1em;
+            }
+            .sub-items {
+                font-size: 0.8em;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .map-container {
+                padding: 20px;
+                min-height: 1200px;
+            }
+            .domain {
+                position: relative;
+                width: 100%;
+                margin-bottom: 20px;
+                top: auto !important;
+                left: auto !important;
+                right: auto !important;
+                bottom: auto !important;
+                transform: none !important;
+            }
+            .central-hub {
+                position: relative;
+                margin: 20px auto;
+                transform: none;
+            }
+            .connection-line {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>安全运营工作图</h1>
+        <div class="map-container" style="min-height: 800px;">
+            <!-- 中心枢纽 -->
+            <div class="central-hub pulse" onclick="showModal('center')">
+                安全运营<br>中心
+            </div>
+
+            <!-- 连接线 -->
+            <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
+                <line class="connection-line" x1="50%" y1="50%" x2="50%" y2="10%" stroke="url(#gradient)" stroke-width="2" opacity="0.3"/>
+                <line class="connection-line" x1="50%" y1="50%" x2="85%" y2="20%" stroke="url(#gradient)" stroke-width="2" opacity="0.3"/>
+                <line class="connection-line" x1="50%" y1="50%" x2="95%" y2="50%" stroke="url(#gradient)" stroke-width="2" opacity="0.3"/>
+                <line class="connection-line" x1="50%" y1="50%" x2="85%" y2="80%" stroke="url(#gradient)" stroke-width="2" opacity="0.3"/>
+                <line class="connection-line" x1="50%" y1="50%" x2="50%" y2="90%" stroke="url(#gradient)" stroke-width="2" opacity="0.3"/>
+                <line class="connection-line" x1="50%" y1="50%" x2="15%" y2="80%" stroke="url(#gradient)" stroke-width="2" opacity="0.3"/>
+                <line class="connection-line" x1="50%" y1="50%" x2="5%" y2="50%" stroke="url(#gradient)" stroke-width="2" opacity="0.3"/>
+                <line class="connection-line" x1="50%" y1="50%" x2="15%" y2="20%" stroke="url(#gradient)" stroke-width="2" opacity="0.3"/>
+                <defs>
+                    <linearGradient id="gradient">
+                        <stop offset="0%" stop-color="rgba(102, 126, 234, 0.3)"/>
+                        <stop offset="100%" stop-color="rgba(118, 75, 162, 0.3)"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+
+            <!-- 八大领域 -->
+            <div class="domain domain-1" onclick="showModal('monitor')">
+                <div class="domain-icon">🛡️</div>
+                <h3>安全监控与检测</h3>
+                <ul class="sub-items">
+                    <li>实时监控</li>
+                    <li>日志分析</li>
+                    <li>威胁检测</li>
+                    <li>异常行为分析</li>
+                </ul>
+            </div>
+
+            <div class="domain domain-2" onclick="showModal('incident')">
+                <div class="domain-icon">🚨</div>
+                <h3>事件响应与处置</h3>
+                <ul class="sub-items">
+                    <li>应急响应</li>
+                    <li>事件分析</li>
+                    <li>处置流程</li>
+                    <li>溯源取证</li>
+                </ul>
+            </div>
+
+            <div class="domain domain-3" onclick="showModal('vulnerability')">
+                <div class="domain-icon">🔍</div>
+                <h3>漏洞管理</h3>
+                <ul class="sub-items">
+                    <li>漏洞扫描</li>
+                    <li>风险评估</li>
+                    <li>补丁管理</li>
+                    <li>漏洞跟踪</li>
+                </ul>
+            </div>
+
+            <div class="domain domain-4" onclick="showModal('threat')">
+                <div class="domain-icon">📊</div>
+                <h3>威胁情报</h3>
+                <ul class="sub-items">
+                    <li>情报收集</li>
+                    <li>威胁分析</li>
+                    <li>情报共享</li>
+                    <li>趋势预测</li>
+                </ul>
+            </div>
+
+            <div class="domain domain-5" onclick="showModal('compliance')">
+                <div class="domain-icon">📋</div>
+                <h3>合规与审计</h3>
+                <ul class="sub-items">
+                    <li>合规检查</li>
+                    <li>安全审计</li>
+                    <li>策略制定</li>
+                    <li>报告管理</li>
+                </ul>
+            </div>
+
+            <div class="domain domain-6" onclick="showModal('asset')">
+                <div class="domain-icon">💼</div>
+                <h3>资产管理</h3>
+                <ul class="sub-items">
+                    <li>资产发现</li>
+                    <li>资产清单</li>
+                    <li>配置管理</li>
+                    <li>风险评级</li>
+                </ul>
+            </div>
+
+            <div class="domain domain-7" onclick="showModal('access')">
+                <div class="domain-icon">🔐</div>
+                <h3>访问控制</h3>
+                <ul class="sub-items">
+                    <li>身份认证</li>
+                    <li>权限管理</li>
+                    <li>账号审计</li>
+                    <li>特权管理</li>
+                </ul>
+            </div>
+
+            <div class="domain domain-8" onclick="showModal('awareness')">
+                <div class="domain-icon">🎓</div>
+                <h3>安全意识培训</h3>
+                <ul class="sub-items">
+                    <li>培训计划</li>
+                    <li>安全教育</li>
+                    <li>演练测试</li>
+                    <li>文化建设</li>
+                </ul>
+            </div>
+
+            <!-- 图例 -->
+            <div class="legend">
+                <h4>图例说明</h4>
+                <div class="legend-item">
+                    <div class="legend-icon"></div>
+                    <span>核心领域</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #eee;"></div>
+                    <span>支撑功能</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const modalContent = {
+            center: {
+                title: '安全运营中心（SOC）',
+                content: `
+                    <div class="modal-section">
+                        <h4>核心职责</h4>
+                        <ul>
+                            <li>7×24小时安全监控和响应</li>
+                            <li>协调各安全团队和资源</li>
+                            <li>制定和执行安全策略</li>
+                            <li>管理安全事件生命周期</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>关键能力</h4>
+                        <ul>
+                            <li>集中化安全管理平台</li>
+                            <li>自动化编排和响应（SOAR）</li>
+                            <li>威胁情报整合</li>
+                            <li>跨部门协作机制</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>团队组成</h4>
+                        <ul>
+                            <li>安全分析师</li>
+                            <li>事件响应专家</li>
+                            <li>威胁猎手</li>
+                            <li>安全架构师</li>
+                        </ul>
+                    </div>
+                `
+            },
+            monitor: {
+                title: '安全监控与检测',
+                content: `
+                    <div class="modal-section">
+                        <h4>监控范围</h4>
+                        <ul>
+                            <li>网络流量监控（IDS/IPS）</li>
+                            <li>终端行为监控（EDR）</li>
+                            <li>应用安全监控（WAF/RASP）</li>
+                            <li>云环境监控（CSPM/CWPP）</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>检测技术</h4>
+                        <ul>
+                            <li>基于规则的检测</li>
+                            <li>机器学习异常检测</li>
+                            <li>用户行为分析（UEBA）</li>
+                            <li>威胁狩猎（Threat Hunting）</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>关键指标</h4>
+                        <ul>
+                            <li>平均检测时间（MTTD）</li>
+                            <li>误报率和漏报率</li>
+                            <li>覆盖率和可见性</li>
+                            <li>告警质量和优先级</li>
+                        </ul>
+                    </div>
+                `
+            },
+            incident: {
+                title: '事件响应与处置',
+                content: `
+                    <div class="modal-section">
+                        <h4>响应流程</h4>
+                        <ul>
+                            <li>准备阶段：制定预案、组建团队</li>
+                            <li>检测分析：确认事件、评估影响</li>
+                            <li>遏制隔离：限制损害、保护证据</li>
+                            <li>根除恢复：清除威胁、恢复服务</li>
+                            <li>总结改进：复盘分析、优化流程</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>事件分级</h4>
+                        <ul>
+                            <li>P1级：重大安全事件，影响核心业务</li>
+                            <li>P2级：高危事件，潜在重大损失</li>
+                            <li>P3级：中危事件，局部影响</li>
+                            <li>P4级：低危事件，常规处理</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>工具支持</h4>
+                        <ul>
+                            <li>事件管理平台（IRP）</li>
+                            <li>取证分析工具</li>
+                            <li>威胁情报平台</li>
+                            <li>自动化响应编排（SOAR）</li>
+                        </ul>
+                    </div>
+                `
+            },
+            vulnerability: {
+                title: '漏洞管理',
+                content: `
+                    <div class="modal-section">
+                        <h4>漏洞生命周期</h4>
+                        <ul>
+                            <li>发现：自动扫描、渗透测试、漏洞情报</li>
+                            <li>评估：CVSS评分、业务影响分析</li>
+                            <li>优先级：风险矩阵、资产价值</li>
+                            <li>修复：补丁管理、配置加固</li>
+                            <li>验证：复测确认、持续监控</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>扫描策略</h4>
+                        <ul>
+                            <li>网络漏洞扫描（月度/季度）</li>
+                            <li>Web应用扫描（发布前/定期）</li>
+                            <li>代码安全扫描（持续集成）</li>
+                            <li>配置合规扫描（实时/定期）</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>管理指标</h4>
+                        <ul>
+                            <li>平均修复时间（MTTR）</li>
+                            <li>漏洞暴露窗口期</li>
+                            <li>修复率和覆盖率</li>
+                            <li>高危漏洞趋势</li>
+                        </ul>
+                    </div>
+                `
+            },
+            threat: {
+                title: '威胁情报',
+                content: `
+                    <div class="modal-section">
+                        <h4>情报来源</h4>
+                        <ul>
+                            <li>商业威胁情报服务</li>
+                            <li>开源情报（OSINT）</li>
+                            <li>行业情报共享组织</li>
+                            <li>内部威胁狩猎</li>
+                            <li>暗网监控</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>情报类型</h4>
+                        <ul>
+                            <li>战术情报：IOC、攻击特征</li>
+                            <li>运营情报：攻击活动、趋势</li>
+                            <li>战略情报：威胁态势、风险评估</li>
+                            <li>技术情报：漏洞、攻击技术</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>应用场景</h4>
+                        <ul>
+                            <li>威胁检测规则优化</li>
+                            <li>主动威胁狩猎</li>
+                            <li>风险评估和决策</li>
+                            <li>安全态势感知</li>
+                        </ul>
+                    </div>
+                `
+            },
+            compliance: {
+                title: '合规与审计',
+                content: `
+                    <div class="modal-section">
+                        <h4>合规框架</h4>
+                        <ul>
+                            <li>法律法规：网络安全法、数据安全法、个保法</li>
+                            <li>行业标准：等保2.0、ISO27001、PCI-DSS</li>
+                            <li>监管要求：行业监管规定</li>
+                            <li>内部政策：安全策略、操作规程</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>审计活动</h4>
+                        <ul>
+                            <li>定期合规评估</li>
+                            <li>安全控制有效性测试</li>
+                            <li>访问权限审计</li>
+                            <li>日志审计和分析</li>
+                            <li>第三方安全审计</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>持续改进</h4>
+                        <ul>
+                            <li>差距分析和改进计划</li>
+                            <li>控制措施优化</li>
+                            <li>政策更新和培训</li>
+                            <li>合规自动化工具</li>
+                        </ul>
+                    </div>
+                `
+            },
+            asset: {
+                title: '资产管理',
+                content: `
+                    <div class="modal-section">
+                        <h4>资产类型</h4>
+                        <ul>
+                            <li>IT资产：服务器、网络设备、终端</li>
+                            <li>软件资产：操作系统、应用、中间件</li>
+                            <li>数据资产：数据库、文件、API</li>
+                            <li>云资产：虚拟机、容器、SaaS应用</li>
+                            <li>人员资产：账号、权限、角色</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>管理流程</h4>
+                        <ul>
+                            <li>资产发现和识别</li>
+                            <li>资产分类和标签</li>
+                            <li>风险评估和评级</li>
+                            <li>生命周期管理</li>
+                            <li>配置基线管理</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>关键能力</h4>
+                        <ul>
+                            <li>自动化资产发现</li>
+                            <li>CMDB集成</li>
+                            <li>资产依赖关系映射</li>
+                            <li>变更追踪和审计</li>
+                        </ul>
+                    </div>
+                `
+            },
+            access: {
+                title: '访问控制',
+                content: `
+                    <div class="modal-section">
+                        <h4>身份认证</h4>
+                        <ul>
+                            <li>多因素认证（MFA）</li>
+                            <li>单点登录（SSO）</li>
+                            <li>生物识别认证</li>
+                            <li>证书认证</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>权限管理</h4>
+                        <ul>
+                            <li>最小权限原则</li>
+                            <li>基于角色的访问控制（RBAC）</li>
+                            <li>动态授权（ABAC）</li>
+                            <li>权限定期审查</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>特权账号管理（PAM）</h4>
+                        <ul>
+                            <li>特权账号发现和管理</li>
+                            <li>密码保险箱</li>
+                            <li>会话监控和录屏</li>
+                            <li>即时授权（JIT/JEA）</li>
+                        </ul>
+                    </div>
+                `
+            },
+            awareness: {
+                title: '安全意识培训',
+                content: `
+                    <div class="modal-section">
+                        <h4>培训体系</h4>
+                        <ul>
+                            <li>新员工安全培训</li>
+                            <li>定期安全意识教育</li>
+                            <li>专项技能培训</li>
+                            <li>管理层安全培训</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>培训内容</h4>
+                        <ul>
+                            <li>密码安全和账号保护</li>
+                            <li>钓鱼邮件识别</li>
+                            <li>社会工程防范</li>
+                            <li>数据安全和隐私保护</li>
+                            <li>安全事件报告流程</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h4>效果评估</h4>
+                        <ul>
+                            <li>钓鱼邮件测试</li>
+                            <li>安全知识考核</li>
+                            <li>安全行为观察</li>
+                            <li>事件报告率分析</li>
+                            <li>培训满意度调查</li>
+                        </ul>
+                    </div>
+                `
+            }
+        };
+
+        function showModal(type) {
+            const modal = document.getElementById('modal');
+            const modalBody = document.getElementById('modal-body');
+            const content = modalContent[type];
+            
+            modalBody.innerHTML = `
+                <h2>${content.title}</h2>
+                ${content.content}
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal(event) {
+            if (!event || event.target.id === 'modal') {
+                document.getElementById('modal').style.display = 'none';
+            }
+        }
+
+        // 添加键盘事件监听
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // 页面加载动画
+        window.addEventListener('load', function() {
+            const domains = document.querySelectorAll('.domain');
+            domains.forEach((domain, index) => {
+                setTimeout(() => {
+                    domain.style.opacity = '0';
+                    domain.style.transform += ' scale(0.8)';
+                    setTimeout(() => {
+                        domain.style.transition = 'all 0.5s ease';
+                        domain.style.opacity = '1';
+                        domain.style.transform = domain.style.transform.replace('scale(0.8)', 'scale(1)');
+                    }, 50);
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>
